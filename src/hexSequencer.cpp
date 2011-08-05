@@ -26,11 +26,16 @@ Note::Note(){
 }
 
 void Note::draw(){
-//    if (drawNote){
+    ofPushStyle();
+    if (!playing){
+        ofNoFill();
+    }else{
+        ofFill();
+    }
         ofSetHexColor(white);
         ofCircle(posX, posY, 5);
         cout << "posX: "<<posX<<", posY:"<<posY<<endl;
-//    }
+    ofPopStyle();
 }
 
 void Note::update(float speed){
@@ -124,13 +129,19 @@ void HexGate::draw(){
 
 HexSequencer::HexSequencer(){
     
+    verdana.loadFont("verdana.ttf", 12, true, true);
+    
     beatIndicatorScale = 0;
     currentHover = 0;
+    bpm = 120;
     
-    ofAddListener(TO.beat, this, &HexSequencer::beatEvent);
-    ofAddListener(TO.subBeat, this, &HexSequencer::subBeatEvent);
-    TO.start();
+    orangeEncoderDown = false;
+    noteLength = 8;
+    noteLengthName = getNoteLengthName(noteLength);
     
+    ofAddListener(metro.beat, this, &HexSequencer::beatEvent);
+    ofAddListener(metro.subBeat, this, &HexSequencer::subBeatEvent);
+    metro.start();
     
     neighbourhood[0][0] = -1;
     neighbourhood[0][1] = 1;
@@ -225,6 +236,29 @@ HexSequencer::HexSequencer(){
     
 }
 
+int HexSequencer::getGreatestCommonDenominator(int a, int b){
+    
+    while (true){
+        a = a%b;
+        if (a==0)return b;
+        
+        b = b%a;
+        if (b==0)return a;
+    }
+    
+}
+
+string HexSequencer::getNoteLengthName(int _noteLength){
+    int numerator = _noteLength;
+    int denominator = 32;
+    int gcd = getGreatestCommonDenominator(numerator, denominator);
+    
+    numerator/=gcd;
+    denominator/=gcd;
+    
+    return ofToString(numerator)+"/"+ofToString(denominator);
+}
+
 void HexSequencer::beatEvent(int &beatCount){
     beatIndicatorScale = 1;
     moveNotes();
@@ -232,7 +266,6 @@ void HexSequencer::beatEvent(int &beatCount){
 }
 
 void HexSequencer::subBeatEvent(int &subBeat){
-    int noteLength = 8;
     
 //    cout <<"subBeatnum is "<<subBeat<<endl;
     
@@ -251,6 +284,7 @@ void HexSequencer::stopNotes(){
             
             if (gates[i].notesOutgoing[j].playing){
                 op1->sendNoteOff(gates[i].notesOutgoing[j].midiId, 0);
+                gates[i].notesOutgoing[j].playing = false;
             }
         }
     }
@@ -419,17 +453,44 @@ void HexSequencer::processOP1Event(midiPacket &event){
         gates[currentHover].turretOneDir = nextTurretAngle;
 
         
-        cout << "blue encoder event"<<endl;
+        cout << "green encoder event"<<endl;
         return;
     }
     
     if (event.elementName=="encoder_white") {
-        cout << "blue encoder event"<<endl;
+        cout << "white encoder event"<<endl;
         return;
     }
     
     if (event.elementName=="encoder_orange") {
-        cout << "blue encoder event"<<endl;
+        
+        if (event.event == "encoder_cw"){
+            if (!orangeEncoderDown){
+                if (noteLength<32) noteLength++;
+                noteLengthName = getNoteLengthName(noteLength);
+            }else{
+                bpm ++;
+                metro.setBPM(bpm);
+            }
+            
+        }else if(event.event == "encoder_ccw"){
+            if (!orangeEncoderDown){
+                if (noteLength>1) noteLength--;
+                noteLengthName = getNoteLengthName(noteLength);
+            }else{
+                bpm --;
+                metro.setBPM(bpm);
+            }
+            
+        }else if (event.event == "button_down"){
+            orangeEncoderDown = true;
+        }else if (event.event == "button_up"){
+            orangeEncoderDown = false;
+        }
+        
+        
+        
+        cout << "orange encoder event"<<endl;
         return;
     }
     
@@ -451,7 +512,7 @@ void HexSequencer::processOP1Event(midiPacket &event){
 
 void HexSequencer::draw(){
     
-    TO.draw();
+//    metro.draw();
     
     ofTranslate(480, 247); //delete this when inserting into op1
     
@@ -463,8 +524,11 @@ void HexSequencer::draw(){
     ofSetHexColor(0x111111);
     ofRect(0, 0, width, height);
     
+    
     ofSetHexColor(orange, beatIndicatorScale*255); //custom hex function in of
     ofCircle(width-30, 30, 10);
+    verdana.drawString(ofToString(bpm), width-45, 15);
+    verdana.drawString(noteLengthName, width-45, 55);
     
     ofTranslate(width/2, height/2); //move origin to centre
     ofTranslate(-trackLength*2, -trackLength*sin(PI/3)); //centre gates on origin

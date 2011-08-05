@@ -8,7 +8,7 @@
 
 #include "ofMain.h"
 #include "ofxOP1.h"
-#include "threadedObject.h"
+#include "threadedMetronome.h"
 
 //class OP1; //forward declaration gives access to member methods
 
@@ -47,10 +47,12 @@ struct HexGate : public ofBaseApp{
 
 class HexSequencer : public ofBaseApp{
     
-    threadedObject	TO;
+    threadedMetronome metro;
     void beatEvent(int &beatCount);
     void subBeatEvent(int &subBeat);
     void stopNotes();
+    
+    ofTrueTypeFont	verdana;
     
     float beatIndicatorScale;
     
@@ -68,6 +70,14 @@ class HexSequencer : public ofBaseApp{
     HexSequencer(); //constructor
     
     OP1 * op1;
+    
+    int bpm;
+    bool orangeEncoderDown;
+    int noteLength;
+    string noteLengthName;
+    string getNoteLengthName(int noteLength);
+    int getGreatestCommonDenominator(int a, int b);
+
     
     void setWidth(int width);
     void createGates();
