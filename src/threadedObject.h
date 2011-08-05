@@ -16,9 +16,16 @@ class threadedObject : public ofThread{
 	public:
     
         ofEvent<int> beat;
+        ofEvent<int> subBeat;
 
 
-	    int count;  // threaded fucntions that share data need to use lock (mutex)
+	    int beatNum;
+        int bpm;
+        float millisPerSubBeat;
+        int subBeatSubdivision;
+    
+    
+    // threaded fucntions that share data need to use lock (mutex)
 	                // and unlock in order to write to that data
 	                // otherwise it's possible to get crashes.
 	                //
@@ -28,7 +35,10 @@ class threadedObject : public ofThread{
 
 		//--------------------------
 		threadedObject(){
-			count = 0;
+			beatNum = 0;
+            bpm = 120;
+            subBeatSubdivision = 32;
+            millisPerSubBeat = 60000/(bpm*subBeatSubdivision);
 		}
 
 		void start(){
@@ -43,12 +53,15 @@ class threadedObject : public ofThread{
 		void threadedFunction(){
 
 			while( isThreadRunning() != 0 ){
-				if( lock() ){
-					count++;
-                    ofNotifyEvent(beat, count, this);
-					if(count > 50000) count = 0;
+				if(lock()){
+					beatNum++;
+					if(beatNum > subBeatSubdivision-1){
+                        beatNum = 0;
+                        ofNotifyEvent(beat, beatNum, this);
+                    }
+                    ofNotifyEvent(subBeat, beatNum, this);
 					unlock();
-					ofSleepMillis(1 * 1000);
+					ofSleepMillis(millisPerSubBeat);
 				}
 			}
 		}
@@ -59,7 +72,7 @@ class threadedObject : public ofThread{
 			string str = "I am a slowly increasing thread. \nmy current count is: ";
 
 			if( lock() ){
-				str += ofToString(count);
+				str += ofToString(beatNum);
 				unlock();
 			}else{
 				str = "can't lock!\neither an error\nor the thread has stopped";

@@ -8,6 +8,7 @@ void testApp::setup(){
     ofAddListener(op1.midiEvent, this, &testApp::op1Event);
 //    sequencer.setWidth(op1.getScreenWidth());
     sequencer.setWidth(385);
+    sequencer.op1 = &op1;
     
     ofSetFrameRate(60); //may cause timing issues, keep an eye on it
     

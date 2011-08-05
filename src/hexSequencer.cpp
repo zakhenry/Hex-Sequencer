@@ -17,6 +17,36 @@ int darkGrey = 0xC3C9C9;
 int black = 0x000000;
 int white = 0xFFFFFF;
 
+Note::Note(){
+    playing = false;
+    posX = 0; 
+    posY = 0;
+//    drawNote = false;
+    moveNote = false;
+}
+
+void Note::draw(){
+//    if (drawNote){
+        ofSetHexColor(white);
+        ofCircle(posX, posY, 5);
+        cout << "posX: "<<posX<<", posY:"<<posY<<endl;
+//    }
+}
+
+void Note::update(float speed){
+    
+    if (moveNote){
+        float vectorAngle = atan2((targetY-posY),(targetX-posX));
+        
+        cout << "vector angle is "<<vectorAngle<<endl;
+        cout << "float vectorAngle = atan2((targetY-posY),(targetX-posX))"<<vectorAngle<<" = atan2(("<<targetY<<"-"<<posY<<"),("<<targetX<<"-"<<posX<<"))"<<endl;
+        
+        posX += cos(vectorAngle)*speed;
+        posY += sin(vectorAngle)*speed;
+    }
+    
+}
+
 HexGate::HexGate(float _size){
     selected = false;
     active = false;
@@ -71,12 +101,7 @@ void HexGate::draw(){
     
         if (selected){
             ofSetHexColor(blue);
-            ofCircle(0, 0, 5);
-        }
-    
-        if (notesOutgoing.size()>0){
-            ofSetHexColor(white);
-            ofCircle(0, 0, 6);
+            ofCircle(0, 0, 8);
         }
     
         ofSetHexColor(green);
@@ -100,9 +125,12 @@ void HexGate::draw(){
 HexSequencer::HexSequencer(){
     
     beatIndicatorScale = 0;
+    currentHover = 0;
     
     ofAddListener(TO.beat, this, &HexSequencer::beatEvent);
+    ofAddListener(TO.subBeat, this, &HexSequencer::subBeatEvent);
     TO.start();
+    
     
     neighbourhood[0][0] = -1;
     neighbourhood[0][1] = 1;
@@ -200,7 +228,32 @@ HexSequencer::HexSequencer(){
 void HexSequencer::beatEvent(int &beatCount){
     beatIndicatorScale = 1;
     moveNotes();
-    cout << "beat event #"<<beatCount<<" occurred"<<endl;
+//    cout << "beat event #"<<beatCount<<" occurred"<<endl;
+}
+
+void HexSequencer::subBeatEvent(int &subBeat){
+    int noteLength = 8;
+    
+//    cout <<"subBeatnum is "<<subBeat<<endl;
+    
+    if (subBeat==noteLength){
+        stopNotes();
+    }
+    
+}
+
+void HexSequencer::stopNotes(){
+    for (int i=0; i<gates.size(); i++){ //process all the notes
+        
+        for (int j=0; j<gates[i].notesOutgoing.size();j++){
+            
+            cout << "stopping "<<gates[i].notesOutgoing.size()<<" notes"<<endl;
+            
+            if (gates[i].notesOutgoing[j].playing){
+                op1->sendNoteOff(gates[i].notesOutgoing[j].midiId, 0);
+            }
+        }
+    }
 }
 
 void HexSequencer::moveNotes(){
@@ -218,6 +271,7 @@ void HexSequencer::moveNotes(){
                 gates[nextGate].notesIncoming = gates[i].notesOutgoing;
                 
             }
+            
             gates[i].notesOutgoing.clear();
         }
         
@@ -225,9 +279,27 @@ void HexSequencer::moveNotes(){
     
     for (int i=0; i<gates.size(); i++){ //process all the notes
         
-        if (gates[i].active){
+        for (int j=0; j<gates[i].notesIncoming.size();j++){
+            if (gates[i].active){
+                gates[i].notesIncoming[j].playing = true;
+                
+                
+                op1->sendNoteOn(gates[i].notesIncoming[j].midiId, 0);
+            }
+            gates[i].notesIncoming[j].moveNote = true;
+            gates[i].notesIncoming[j].posX = gates[i].posX;
+            gates[i].notesIncoming[j].posY = gates[i].posY;
             
-            //trigger sound
+            int nextGate = gates[i].neighbours[gates[i].turretOneDir];
+            
+            if (nextGate>-1){
+                gates[i].notesIncoming[j].targetX = gates[nextGate].posX;
+                gates[i].notesIncoming[j].targetY = gates[nextGate].posY;
+//                gates[i].notesIncoming[j].drawNote = true;
+            }else{
+//                gates[i].notesIncoming[j].drawNote = false;
+            }
+            
             
         }
         
@@ -365,6 +437,11 @@ void HexSequencer::processOP1Event(midiPacket &event){
     if (event.elementId>52&&event.elementId<77){ //keyboard press
         Note newNote;
         newNote.midiId = event.elementId;
+        newNote.posX = gates[currentHover].posX; //makes it stay in place
+        newNote.posY = gates[currentHover].posY;
+        newNote.targetX = newNote.posX;
+        newNote.targetX = newNote.posY;
+//        newNote.drawNote = true;
         gates[currentHover].notesOutgoing.push_back(newNote);
     }
     
@@ -396,7 +473,14 @@ void HexSequencer::draw(){
         gates[i].draw();
     }
     
-    
+    for (int i=0; i<gates.size(); i++){ //process all the notes
+        for (int j=0; j<gates[i].notesOutgoing.size();j++){
+            int bpm = 120; //link to thread later ###
+            float speed = trackLength/30;
+            gates[i].notesOutgoing[j].update(speed);
+            gates[i].notesOutgoing[j].draw();
+        }
+    }
     
     ofPopStyle();
 }

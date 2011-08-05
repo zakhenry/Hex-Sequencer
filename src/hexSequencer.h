@@ -13,7 +13,15 @@
 //class OP1; //forward declaration gives access to member methods
 
 struct Note {
+    Note();
     int midiId;
+    bool playing;
+    float targetX, targetY;
+    float posX, posY;
+    void update(float speed);
+    void draw();
+    bool drawNote;
+    bool moveNote;
 };
 
 struct HexGate : public ofBaseApp{
@@ -41,6 +49,8 @@ class HexSequencer : public ofBaseApp{
     
     threadedObject	TO;
     void beatEvent(int &beatCount);
+    void subBeatEvent(int &subBeat);
+    void stopNotes();
     
     float beatIndicatorScale;
     
@@ -56,12 +66,18 @@ class HexSequencer : public ofBaseApp{
     
     public:
     HexSequencer(); //constructor
+    
+    OP1 * op1;
+    
     void setWidth(int width);
     void createGates();
     void update(); //update moving vars
     void draw();
 
     vector<HexGate>gates;
+    
+    vector<Note>activeNotes;
+    
     int neighbourhood [13][6];
     
     void processOP1Event(midiPacket &event);
