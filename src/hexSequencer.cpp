@@ -34,7 +34,7 @@ void Note::draw(){
     }
         ofSetHexColor(white);
         ofCircle(posX, posY, 5);
-        cout << "posX: "<<posX<<", posY:"<<posY<<endl;
+//        cout << "posX: "<<posX<<", posY:"<<posY<<endl;
     ofPopStyle();
 }
 
@@ -43,8 +43,8 @@ void Note::update(float speed){
     if (moveNote){
         float vectorAngle = atan2((targetY-posY),(targetX-posX));
         
-        cout << "vector angle is "<<vectorAngle<<endl;
-        cout << "float vectorAngle = atan2((targetY-posY),(targetX-posX))"<<vectorAngle<<" = atan2(("<<targetY<<"-"<<posY<<"),("<<targetX<<"-"<<posX<<"))"<<endl;
+//        cout << "vector angle is "<<vectorAngle<<endl;
+//        cout << "float vectorAngle = atan2((targetY-posY),(targetX-posX))"<<vectorAngle<<" = atan2(("<<targetY<<"-"<<posY<<"),("<<targetX<<"-"<<posX<<"))"<<endl;
         
         posX += cos(vectorAngle)*speed;
         posY += sin(vectorAngle)*speed;
@@ -55,8 +55,10 @@ void Note::update(float speed){
 HexGate::HexGate(float _size){
     selected = false;
     active = false;
-    turretOneDir = 0;
-    turretTwoDir = -1;
+    turretZeroDir = 0;
+    turretOneDir = -1;
+    
+    turretActive = 0;
     
     radius = _size;
     turretWidth = radius/6;
@@ -88,17 +90,29 @@ void HexGate::draw(){
             ofVertexes(hexPoints);
         ofEndShape();
     
-        ofSetHexColor(green);
+        
+        
+        if (turretActive==0){
+            ofSetHexColor(green);
+        }else{
+            ofSetHexColor(green, (int)255/2);
+        }
     
         ofPushMatrix();
-            ofRotateZ(60*(turretOneDir+3)); //top is 0
+            ofRotateZ(60*(turretZeroDir+3)); //top is 0
             ofTranslate(0, radius);
             ofRect(-turretWidth/2, 0, turretWidth, turretLength);
         ofPopMatrix();
     
-        if (turretTwoDir>=0){
+        if (turretOneDir>=0){
+            if (turretActive==1){
+                ofSetHexColor(white);
+            }else{
+                ofSetHexColor(white, (int)255/2);
+            }
+                  
             ofPushMatrix();
-                ofRotateZ(60*(turretTwoDir+3)); //top is 0
+                ofRotateZ(60*(turretOneDir+3)); //top is 0
                 ofTranslate(0, radius);
                 ofRect(-turretWidth/2, 0, turretWidth, turretLength);
             ofPopMatrix();
@@ -109,15 +123,15 @@ void HexGate::draw(){
             ofCircle(0, 0, 8);
         }
     
-        ofSetHexColor(green);
+//        ofSetHexColor(green);
 //        verdana30.drawString(ofToString(id), -15, 12);
         
-//    if (turretOneDir==0) verdana10.drawString(ofToString(neighbours[0]), -5, -20);
-//    if (turretOneDir==1) verdana10.drawString(ofToString(neighbours[1]), 15, -7);
-//    if (turretOneDir==2) verdana10.drawString(ofToString(neighbours[2]), 15, 20);
-//    if (turretOneDir==3) verdana10.drawString(ofToString(neighbours[3]), -5, 35);
-//    if (turretOneDir==4) verdana10.drawString(ofToString(neighbours[4]), -30, 20);
-//    if (turretOneDir==5) verdana10.drawString(ofToString(neighbours[5]), -30, -7);
+//    if (turretZeroDir==0) verdana10.drawString(ofToString(neighbours[0]), -5, -20);
+//    if (turretZeroDir==1) verdana10.drawString(ofToString(neighbours[1]), 15, -7);
+//    if (turretZeroDir==2) verdana10.drawString(ofToString(neighbours[2]), 15, 20);
+//    if (turretZeroDir==3) verdana10.drawString(ofToString(neighbours[3]), -5, 35);
+//    if (turretZeroDir==4) verdana10.drawString(ofToString(neighbours[4]), -30, 20);
+//    if (turretZeroDir==5) verdana10.drawString(ofToString(neighbours[5]), -30, -7);
     
         
         
@@ -278,13 +292,13 @@ void HexSequencer::subBeatEvent(int &subBeat){
 void HexSequencer::stopNotes(){
     for (int i=0; i<gates.size(); i++){ //process all the notes
         
-        for (int j=0; j<gates[i].notesOutgoing.size();j++){
+        for (int j=0; j<gates[i].notesIncoming.size();j++){
             
-            cout << "stopping "<<gates[i].notesOutgoing.size()<<" notes"<<endl;
+            cout << "checking "<<gates[i].notesIncoming.size()<<" notes"<<endl;
             
-            if (gates[i].notesOutgoing[j].playing){
-                op1->sendNoteOff(gates[i].notesOutgoing[j].midiId, 0);
-                gates[i].notesOutgoing[j].playing = false;
+            if (gates[i].notesIncoming[j].playing){
+                op1->sendNoteOff(gates[i].notesIncoming[j].midiId, 0);
+                gates[i].notesIncoming[j].playing = false;
             }
         }
     }
@@ -292,56 +306,61 @@ void HexSequencer::stopNotes(){
 
 void HexSequencer::moveNotes(){
     
-    for (int i=0; i<gates.size(); i++){ //swap all the notes
+    for (int i=0; i<gates.size(); i++){ //process all the notes incoming
+        
+        cout << "there is "<<gates[i].notesIncoming.size()<<" notes incoming for gate "<<i<<endl;
+        
+        if (gates[i].active){
+            for (int j=0; j<gates[i].notesIncoming.size();j++){
+                
+                    gates[i].notesIncoming[j].playing = true;
+                    
+                    op1->sendNoteOn(gates[i].notesIncoming[j].midiId, 0);
+            }
+        }
+        
+        gates[i].notesOutgoing = gates[i].notesIncoming;
+        gates[i].notesIncoming.clear();
+        
+    }
+    
+    for (int i=0; i<gates.size(); i++){ //move notes
         
         if (gates[i].notesOutgoing.size()>0){
          
-            int nextGate = gates[i].neighbours[gates[i].turretOneDir]; //im only using the one turret for now
+//            gates[i].nextGate = (gates[i].turretActive==0) ? gates[i].neighbours[gates[i].turretZeroDir] : gates[i].neighbours[gates[i].turretOneDir]; //im only using the Zero turret for now
+//            int nextGate = gates[i].neighbours[gates[i].turretZeroDir];
+            int nextGate = (gates[i].turretActive==0) ? gates[i].turretZeroGate : gates[i].turretOneGate;
+            cout << "0 nextGate to visit is "<<nextGate<<endl;
+            cout << "0 active turret is "<<gates[i].turretActive<<endl;
             
-            cout << "nextGate to visit is "<<nextGate<<endl;
+            if (gates[i].turretActive==0&&gates[i].turretOneDir>=0){
+                gates[i].turretActive=1;
+            }else{
+                gates[i].turretActive=0;
+            }
+            
             
             if (nextGate>-1){
-                
+                for (int j=0; j<gates[i].notesOutgoing.size();j++){
+                    gates[i].notesOutgoing[j].targetX = gates[nextGate].posX;
+                    gates[i].notesOutgoing[j].targetY = gates[nextGate].posY;
+                    
+                    gates[i].notesOutgoing[j].moveNote = true;
+                    gates[i].notesOutgoing[j].posX = gates[i].posX;
+                    gates[i].notesOutgoing[j].posY = gates[i].posY;
+                }
                 gates[nextGate].notesIncoming = gates[i].notesOutgoing;
-                
             }
+            
+            cout << "1 nextGate to visit is "<<nextGate<<endl;
             
             gates[i].notesOutgoing.clear();
         }
         
     }
     
-    for (int i=0; i<gates.size(); i++){ //process all the notes
-        
-        for (int j=0; j<gates[i].notesIncoming.size();j++){
-            if (gates[i].active){
-                gates[i].notesIncoming[j].playing = true;
-                
-                
-                op1->sendNoteOn(gates[i].notesIncoming[j].midiId, 0);
-            }
-            gates[i].notesIncoming[j].moveNote = true;
-            gates[i].notesIncoming[j].posX = gates[i].posX;
-            gates[i].notesIncoming[j].posY = gates[i].posY;
-            
-            int nextGate = gates[i].neighbours[gates[i].turretOneDir];
-            
-            if (nextGate>-1){
-                gates[i].notesIncoming[j].targetX = gates[nextGate].posX;
-                gates[i].notesIncoming[j].targetY = gates[nextGate].posY;
-//                gates[i].notesIncoming[j].drawNote = true;
-            }else{
-//                gates[i].notesIncoming[j].drawNote = false;
-            }
-            
-            
-        }
-        
-        gates[i].notesOutgoing = gates[i].notesIncoming;
-        gates[i].notesIncoming.clear();
-        
-        
-    }
+    
     
 }
 
@@ -384,6 +403,9 @@ void HexSequencer::createGates(){
         gate.neighbours[3] = neighbourhood[i][3];
         gate.neighbours[4] = neighbourhood[i][4];
         gate.neighbours[5] = neighbourhood[i][5];
+        
+        gate.turretZeroGate = gate.neighbours[gate.turretZeroDir];
+        gate.turretOneGate = gate.neighbours[gate.turretOneDir];
         
         
         gates.push_back(gate);
@@ -439,7 +461,37 @@ void HexSequencer::processOP1Event(midiPacket &event){
     
     if (event.elementName=="encoder_green") {
         
+        int nextTurretAngle = gates[currentHover].turretZeroDir;
+        
+        if (event.event == "encoder_cw"){
+            nextTurretAngle ++;
+        }else if(event.event == "encoder_ccw"){
+            nextTurretAngle --;
+        }
+        
+        nextTurretAngle = (nextTurretAngle>5)?0:nextTurretAngle;
+        nextTurretAngle = (nextTurretAngle<0)?5:nextTurretAngle;
+        
+        gates[currentHover].turretZeroDir = nextTurretAngle;
+        gates[currentHover].turretZeroGate = gates[currentHover].neighbours[nextTurretAngle];
+        
+        if (gates[currentHover].turretOneDir == nextTurretAngle){
+            gates[currentHover].turretOneDir = -1;
+            gates[currentHover].turretActive = 0;
+        }
+
+        
+        cout << "green encoder event"<<endl;
+        return;
+    }
+    
+    if (event.elementName=="encoder_white") {
+        
         int nextTurretAngle = gates[currentHover].turretOneDir;
+        
+        if (nextTurretAngle==-1){
+            nextTurretAngle = gates[currentHover].turretZeroDir;
+        }
         
         if (event.event == "encoder_cw"){
             nextTurretAngle ++;
@@ -451,13 +503,8 @@ void HexSequencer::processOP1Event(midiPacket &event){
         nextTurretAngle = (nextTurretAngle<0)?5:nextTurretAngle;
         
         gates[currentHover].turretOneDir = nextTurretAngle;
-
+        gates[currentHover].turretOneGate = gates[currentHover].neighbours[nextTurretAngle];
         
-        cout << "green encoder event"<<endl;
-        return;
-    }
-    
-    if (event.elementName=="encoder_white") {
         cout << "white encoder event"<<endl;
         return;
     }
@@ -503,7 +550,7 @@ void HexSequencer::processOP1Event(midiPacket &event){
         newNote.targetX = newNote.posX;
         newNote.targetX = newNote.posY;
 //        newNote.drawNote = true;
-        gates[currentHover].notesOutgoing.push_back(newNote);
+        gates[currentHover].notesIncoming.push_back(newNote);
     }
     
     
@@ -538,11 +585,11 @@ void HexSequencer::draw(){
     }
     
     for (int i=0; i<gates.size(); i++){ //process all the notes
-        for (int j=0; j<gates[i].notesOutgoing.size();j++){
+        for (int j=0; j<gates[i].notesIncoming.size();j++){
             int bpm = 120; //link to thread later ###
             float speed = trackLength/30;
-            gates[i].notesOutgoing[j].update(speed);
-            gates[i].notesOutgoing[j].draw();
+            gates[i].notesIncoming[j].update(speed);
+            gates[i].notesIncoming[j].draw();
         }
     }
     

@@ -30,7 +30,9 @@ struct HexGate : public ofBaseApp{
     int id;
     float posX, posY;
     bool selected, active;
-    int turretOneDir, turretTwoDir;
+    int turretZeroDir, turretOneDir; //direction
+    int turretZeroGate, turretOneGate; //gate turret is pointing at
+    int turretActive;
     vector<ofPoint>hexPoints;
     float radius, turretLength, turretWidth;
     void draw();

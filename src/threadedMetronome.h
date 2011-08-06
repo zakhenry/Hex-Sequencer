@@ -11,7 +11,7 @@
 // to debug and working with threads can be quite difficult
 
 
-class threadedObject : public ofThread{
+class threadedMetronome : public ofThread{
 
 	public:
     
@@ -34,7 +34,7 @@ class threadedObject : public ofThread{
 	                // since opengl is single thread safe
 
 		//--------------------------
-		threadedObject(){
+		threadedMetronome(){
 			beatNum = 0;
             bpm = 120;
             subBeatSubdivision = 32;
@@ -47,6 +47,11 @@ class threadedObject : public ofThread{
 
         void stop(){
             stopThread();
+        }
+    
+        void setBPM(int _bpm){
+            bpm = _bpm;
+            millisPerSubBeat = 60000/(bpm*subBeatSubdivision);
         }
 
 		//--------------------------
