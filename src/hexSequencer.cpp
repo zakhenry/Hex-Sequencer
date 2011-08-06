@@ -250,6 +250,10 @@ HexSequencer::HexSequencer(){
     
 }
 
+HexSequencer::~HexSequencer(){ //destructor
+    stopNotes();
+}
+
 int HexSequencer::getGreatestCommonDenominator(int a, int b){
     
     while (true){
@@ -275,6 +279,10 @@ string HexSequencer::getNoteLengthName(int _noteLength){
 
 void HexSequencer::beatEvent(int &beatCount){
     beatIndicatorScale = 1;
+    
+    if (noteLength==32){ //full measure, so stop on the beat
+        stopNotes();
+    }
     moveNotes();
 //    cout << "beat event #"<<beatCount<<" occurred"<<endl;
 }
@@ -283,7 +291,7 @@ void HexSequencer::subBeatEvent(int &subBeat){
     
 //    cout <<"subBeatnum is "<<subBeat<<endl;
     
-    if (subBeat==noteLength){
+    if (subBeat==noteLength&&noteLength!=32){
         stopNotes();
     }
     
@@ -294,7 +302,7 @@ void HexSequencer::stopNotes(){
         
         for (int j=0; j<gates[i].notesIncoming.size();j++){
             
-            cout << "checking "<<gates[i].notesIncoming.size()<<" notes"<<endl;
+            cout << j<<" checking "<<gates[i].notesIncoming.size()<<" notes"<<endl;
             
             if (gates[i].notesIncoming[j].playing){
                 op1->sendNoteOff(gates[i].notesIncoming[j].midiId, 0);
@@ -334,11 +342,8 @@ void HexSequencer::moveNotes(){
             cout << "0 nextGate to visit is "<<nextGate<<endl;
             cout << "0 active turret is "<<gates[i].turretActive<<endl;
             
-            if (gates[i].turretActive==0&&gates[i].turretOneDir>=0){
-                gates[i].turretActive=1;
-            }else{
-                gates[i].turretActive=0;
-            }
+            if (gates[i].turretOneDir>=0) gates[i].turretActive = (gates[i].turretActive==0)?1:0;
+            
             
             
             if (nextGate>-1){
@@ -504,6 +509,11 @@ void HexSequencer::processOP1Event(midiPacket &event){
         
         gates[currentHover].turretOneDir = nextTurretAngle;
         gates[currentHover].turretOneGate = gates[currentHover].neighbours[nextTurretAngle];
+        
+        if (gates[currentHover].turretZeroDir == nextTurretAngle){
+            gates[currentHover].turretOneDir = -1;
+            gates[currentHover].turretActive = 0;
+        }
         
         cout << "white encoder event"<<endl;
         return;

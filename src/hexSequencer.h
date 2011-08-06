@@ -70,6 +70,7 @@ class HexSequencer : public ofBaseApp{
     
     public:
     HexSequencer(); //constructor
+    ~HexSequencer(); //destructor
     
     OP1 * op1;
     
