@@ -16,7 +16,7 @@ struct Note {
     Note();
     int midiId;
     bool playing;
-    float targetX, targetY;
+    float targetGateX, targetGateY, lastGateX, lastGateY;
     float posX, posY;
     void update(float speed);
     void draw();
@@ -53,6 +53,7 @@ class HexSequencer : public ofBaseApp{
     void beatEvent(int &beatCount);
     void subBeatEvent(int &subBeat);
     void stopNotes();
+    float currentBeatTime, beatTimestamp, currentBeatProgression;
     
     ofTrueTypeFont	verdana;
     

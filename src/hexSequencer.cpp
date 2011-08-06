@@ -38,16 +38,22 @@ void Note::draw(){
     ofPopStyle();
 }
 
-void Note::update(float speed){
+void Note::update(float distanceAlong){
     
     if (moveNote){
-        float vectorAngle = atan2((targetY-posY),(targetX-posX));
+        
+        //change this so instead of incrementing, posX&Y are defined by a % of how far between gates they are. This will allow for smooth scaling of speeds
+        
+        float vectorAngle = atan2((targetGateY-lastGateY),(targetGateX-lastGateX));
         
 //        cout << "vector angle is "<<vectorAngle<<endl;
 //        cout << "float vectorAngle = atan2((targetY-posY),(targetX-posX))"<<vectorAngle<<" = atan2(("<<targetY<<"-"<<posY<<"),("<<targetX<<"-"<<posX<<"))"<<endl;
         
-        posX += cos(vectorAngle)*speed;
-        posY += sin(vectorAngle)*speed;
+//        posX += cos(vectorAngle)*speed;
+//        posY += sin(vectorAngle)*speed;
+        
+        posX = lastGateX+cos(vectorAngle)*distanceAlong;
+        posY = lastGateY+sin(vectorAngle)*distanceAlong;
     }
     
 }
@@ -278,6 +284,10 @@ string HexSequencer::getNoteLengthName(int _noteLength){
 }
 
 void HexSequencer::beatEvent(int &beatCount){
+    
+    currentBeatTime = 0;
+    beatTimestamp = ofGetElapsedTimef();
+    
     beatIndicatorScale = 1;
     
     if (noteLength==32){ //full measure, so stop on the beat
@@ -338,27 +348,35 @@ void HexSequencer::moveNotes(){
          
 //            gates[i].nextGate = (gates[i].turretActive==0) ? gates[i].neighbours[gates[i].turretZeroDir] : gates[i].neighbours[gates[i].turretOneDir]; //im only using the Zero turret for now
 //            int nextGate = gates[i].neighbours[gates[i].turretZeroDir];
-            int nextGate = (gates[i].turretActive==0) ? gates[i].turretZeroGate : gates[i].turretOneGate;
-            cout << "0 nextGate to visit is "<<nextGate<<endl;
-            cout << "0 active turret is "<<gates[i].turretActive<<endl;
             
-            if (gates[i].turretOneDir>=0) gates[i].turretActive = (gates[i].turretActive==0)?1:0;
+//            cout << "0 nextGate to visit is "<<nextGate<<endl;
+//            cout << "0 active turret is "<<gates[i].turretActive<<endl;
             
             
-            
-            if (nextGate>-1){
-                for (int j=0; j<gates[i].notesOutgoing.size();j++){
-                    gates[i].notesOutgoing[j].targetX = gates[nextGate].posX;
-                    gates[i].notesOutgoing[j].targetY = gates[nextGate].posY;
+        
+            for (int j=0; j<gates[i].notesOutgoing.size();j++){
+                
+                int nextGate = (gates[i].turretActive==0) ? gates[i].turretZeroGate : gates[i].turretOneGate;
+                if (gates[i].turretOneDir>=0) gates[i].turretActive = (gates[i].turretActive==0)?1:0;
+                
+                if (nextGate>-1){
+                    
+                    gates[i].notesOutgoing[j].lastGateX = gates[i].posX;
+                    gates[i].notesOutgoing[j].lastGateY = gates[i].posY;
+                    gates[i].notesOutgoing[j].targetGateX = gates[nextGate].posX;
+                    gates[i].notesOutgoing[j].targetGateY = gates[nextGate].posY;
                     
                     gates[i].notesOutgoing[j].moveNote = true;
                     gates[i].notesOutgoing[j].posX = gates[i].posX;
                     gates[i].notesOutgoing[j].posY = gates[i].posY;
+                    
+                    gates[nextGate].notesIncoming.push_back(gates[i].notesOutgoing[j]);
+                        
                 }
-                gates[nextGate].notesIncoming = gates[i].notesOutgoing;
             }
+//                gates[nextGate].notesIncoming = gates[i].notesOutgoing;
             
-            cout << "1 nextGate to visit is "<<nextGate<<endl;
+//            cout << "1 nextGate to visit is "<<nextGate<<endl;
             
             gates[i].notesOutgoing.clear();
         }
@@ -423,7 +441,22 @@ void HexSequencer::createGates(){
 
 void HexSequencer::update(){
     
-    beatIndicatorScale-=0.01;
+    
+    currentBeatTime = ofGetElapsedTimef()-beatTimestamp;
+    currentBeatProgression = currentBeatTime/(60/(float)bpm) ;//seconds per beat
+    
+//    cout << "60/(float)bpm: "<<60/(float)bpm<<endl;
+//    cout << "currentBeatProgression: "<<currentBeatProgression<<endl;
+//    beatIndicatorScale-=0.01;
+//    beatIndicatorScale = currentBeatProgression;
+    
+    for (int i=0; i<gates.size(); i++){ //process all the notes
+        for (int j=0; j<gates[i].notesIncoming.size();j++){
+            
+            float distanceAlong = trackLength*currentBeatProgression;
+            gates[i].notesIncoming[j].update(distanceAlong);
+        }
+    }
     
 }
 
@@ -535,7 +568,7 @@ void HexSequencer::processOP1Event(midiPacket &event){
                 if (noteLength>1) noteLength--;
                 noteLengthName = getNoteLengthName(noteLength);
             }else{
-                bpm --;
+                if (bpm>2)bpm --;
                 metro.setBPM(bpm);
             }
             
@@ -557,9 +590,11 @@ void HexSequencer::processOP1Event(midiPacket &event){
         newNote.midiId = event.elementId;
         newNote.posX = gates[currentHover].posX; //makes it stay in place
         newNote.posY = gates[currentHover].posY;
-        newNote.targetX = newNote.posX;
-        newNote.targetX = newNote.posY;
-//        newNote.drawNote = true;
+        newNote.targetGateX = newNote.posX;
+        newNote.targetGateX = newNote.posY;
+        newNote.lastGateX = newNote.posX;
+        newNote.lastGateX = newNote.posY;
+        newNote.moveNote = false;
         gates[currentHover].notesIncoming.push_back(newNote);
     }
     
@@ -596,9 +631,9 @@ void HexSequencer::draw(){
     
     for (int i=0; i<gates.size(); i++){ //process all the notes
         for (int j=0; j<gates[i].notesIncoming.size();j++){
-            int bpm = 120; //link to thread later ###
-            float speed = trackLength/30;
-            gates[i].notesIncoming[j].update(speed);
+            
+//            float distanceAlong = trackLength*currentBeatProgression;
+//            gates[i].notesIncoming[j].update(distanceAlong);
             gates[i].notesIncoming[j].draw();
         }
     }
