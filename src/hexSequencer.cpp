@@ -326,7 +326,7 @@ void HexSequencer::moveNotes(){
     
     for (int i=0; i<gates.size(); i++){ //process all the notes incoming
         
-        cout << "there is "<<gates[i].notesIncoming.size()<<" notes incoming for gate "<<i<<endl;
+//        cout << "there is "<<gates[i].notesIncoming.size()<<" notes incoming for gate "<<i<<endl;
         
         if (gates[i].active){
             for (int j=0; j<gates[i].notesIncoming.size();j++){
@@ -584,19 +584,23 @@ void HexSequencer::processOP1Event(midiPacket &event){
         return;
     }
     
-    
-    if (event.elementId>52&&event.elementId<77){ //keyboard press
-        Note newNote;
-        newNote.midiId = event.elementId;
-        newNote.posX = gates[currentHover].posX; //makes it stay in place
-        newNote.posY = gates[currentHover].posY;
-        newNote.targetGateX = newNote.posX;
-        newNote.targetGateX = newNote.posY;
-        newNote.lastGateX = newNote.posX;
-        newNote.lastGateX = newNote.posY;
-        newNote.moveNote = false;
-        gates[currentHover].notesIncoming.push_back(newNote);
+    if (event.event == "key_down"){
+        if (event.elementId>52&&event.elementId<77){ //keyboard press
+            Note newNote;
+            newNote.midiId = event.elementId;
+            newNote.posX = gates[currentHover].posX; //makes it stay in place
+            newNote.posY = gates[currentHover].posY;
+            newNote.targetGateX = newNote.posX;
+            newNote.targetGateX = newNote.posY;
+            newNote.lastGateX = newNote.posX;
+            newNote.lastGateX = newNote.posY;
+            newNote.moveNote = false;
+            gates[currentHover].notesIncoming.push_back(newNote);
+            
+            cout << "added new note"<<endl;
+        }
     }
+    
     
     
     
