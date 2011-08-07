@@ -17,12 +17,13 @@ int darkGrey = 0xC3C9C9;
 int black = 0x000000;
 int white = 0xFFFFFF;
 
-Note::Note(){
+Note::Note(float _scale){
     playing = false;
     posX = 0; 
     posY = 0;
 //    drawNote = false;
     moveNote = false;
+    scale = _scale;
 }
 
 void Note::draw(){
@@ -33,7 +34,7 @@ void Note::draw(){
         ofFill();
     }
         ofSetHexColor(white);
-        ofCircle(posX, posY, 5);
+        ofCircle(posX, posY, scale/15);
 //        cout << "posX: "<<posX<<", posY:"<<posY<<endl;
     ofPopStyle();
 }
@@ -58,7 +59,7 @@ void Note::update(float distanceAlong){
     
 }
 
-HexGate::HexGate(float _size){
+HexGate::HexGate(float _scale){
     selected = false;
     active = false;
     turretZeroDir = 0;
@@ -66,7 +67,7 @@ HexGate::HexGate(float _size){
     
     turretActive = 0;
     
-    radius = _size;
+    radius = _scale/4;
     turretWidth = radius/6;
     turretLength = radius/1.5;
     
@@ -126,7 +127,7 @@ void HexGate::draw(){
     
         if (selected){
             ofSetHexColor(blue);
-            ofCircle(0, 0, 8);
+            ofCircle(0, 0, radius/3);
         }
     
 //        ofSetHexColor(green);
@@ -390,9 +391,18 @@ void HexSequencer::moveNotes(){
     
 }
 
-void HexSequencer::setWidth(int _width){
+void HexSequencer::setPosition(float _x, float _y, int _width){
     width = _width;
     height = width/2;
+    
+    scale = width/5; //this defines the track length. everything is scaled relative to that
+    
+    float x, y, w, h;
+    op1->getScreenDimensions(x, y, w, h);
+    
+    posX = _x;
+    posY = _y;
+    
     cout << "width is "<<width<<" height is "<<height<<endl;
     createGates();
 }
@@ -400,10 +410,10 @@ void HexSequencer::setWidth(int _width){
 void HexSequencer::createGates(){
     gates.empty(); //in case it has been initiated before
     
-    trackLength = width/5;
+    trackLength = scale;
     
     for (int i=0; i<13; i++){
-        HexGate gate (width/20);
+        HexGate gate (scale);
         gate.id = i;
         int yPos = 0;
         int xPos = 0;
@@ -589,7 +599,7 @@ void HexSequencer::processOP1Event(midiPacket &event){
     
     if (event.event == "key_down"){
         if (event.elementId>52&&event.elementId<77){ //keyboard press
-            Note newNote;
+            Note newNote(scale);
             newNote.midiId = event.elementId;
             newNote.posX = gates[currentHover].posX; //makes it stay in place
             newNote.posY = gates[currentHover].posY;
@@ -611,9 +621,11 @@ void HexSequencer::processOP1Event(midiPacket &event){
 
 void HexSequencer::draw(){
     
+    ofPushStyle();
+    
 //    metro.draw();
     
-    ofTranslate(480, 247); //delete this when inserting into op1
+    ofTranslate(posX, posY); //delete this when inserting into op1
     
     ofPushStyle();
     
@@ -623,11 +635,18 @@ void HexSequencer::draw(){
     ofSetHexColor(0x111111);
     ofRect(0, 0, width, height);
     
+    ofPushMatrix();
     
+    ofTranslate(width-(scale/3), 0);
+    ofScale(scale/70, scale/70);
     ofSetHexColor(orange, beatIndicatorScale*255); //custom hex function in of
-    ofCircle(width-30, 30, 10);
-    verdana.drawString(ofToString(bpm), width-45, 15);
-    verdana.drawString(noteLengthName, width-45, 55);
+    ofCircle(0, 30, 10);
+    verdana.drawString(ofToString(bpm), -15, 15);
+    int stringLength = noteLengthName.length();
+//    cout << stringLength <<endl;
+    verdana.drawString(noteLengthName, -(stringLength*5), 55);
+    
+    ofPopMatrix();
     
     ofTranslate(width/2, height/2); //move origin to centre
     ofTranslate(-trackLength*2, -trackLength*sin(PI/3)); //centre gates on origin
@@ -644,6 +663,8 @@ void HexSequencer::draw(){
             gates[i].notesIncoming[j].draw();
         }
     }
+    
+    ofPopStyle();
     
     ofPopStyle();
 }

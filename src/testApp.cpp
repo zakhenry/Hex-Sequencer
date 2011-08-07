@@ -7,8 +7,11 @@ void testApp::setup(){
     ofSetWindowTitle("OP-1 Sequencer");
     ofAddListener(op1.midiEvent, this, &testApp::op1Event);
 //    sequencer.setWidth(op1.getScreenWidth());
-    sequencer.setWidth(385);
+    
     sequencer.op1 = &op1;
+    float x, y, w, h;
+    op1.getScreenDimensions(x, y, w, h);
+    sequencer.setPosition(x, y, (int)w);
     
     ofSetFrameRate(60); //may cause timing issues, keep an eye on it
     
@@ -29,15 +32,19 @@ void testApp::op1Event(midiPacket &packet){
 //--------------------------------------------------------------
 void testApp::draw(){
     
+    
+    
     op1.draw();
+    
     sequencer.draw();
+    
+//    float x, y, w, h;
+//    op1.getScreenDimensions(x, y, w, h);
+//    ofSetHexColor(0x00ff00);
+//    ofSetRectMode(OF_RECTMODE_CORNER);
+//    ofRect(x, y, w, h);
+    
 }
-
-//void OP1::drawScreen(){
-//    ofSetHexColor(0x0ffff0);
-//    ofRect(10, 10, 20, 20);
-//    
-//}
 
 //--------------------------------------------------------------
 void testApp::keyPressed(int key){

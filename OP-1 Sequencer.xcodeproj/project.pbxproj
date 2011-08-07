@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6C2E7C6D13EE9B46004D4762 /* hex synth.icns in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6CC57FEE13EE9ACC00B91D87 /* hex synth.icns */; };
 		6C48156F13E7B82F00404D21 /* arrow_left.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6C5FF34013E7B38700992EAC /* arrow_left.png */; };
 		6C48157013E7B82F00404D21 /* arrow_right.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6C5FF34113E7B38700992EAC /* arrow_right.png */; };
 		6C48157113E7B82F00404D21 /* com.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6C5FF34213E7B38700992EAC /* com.png */; };
@@ -88,6 +89,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 7;
 			files = (
+				6C2E7C6D13EE9B46004D4762 /* hex synth.icns in CopyFiles */,
 				6CD9285813EC08A60050CA57 /* verdana.ttf in CopyFiles */,
 				6C48156F13E7B82F00404D21 /* arrow_left.png in CopyFiles */,
 				6C48157013E7B82F00404D21 /* arrow_right.png in CopyFiles */,
@@ -234,6 +236,8 @@
 		6C938EBD13E79039007FFD30 /* ofxMidiOut.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxMidiOut.cpp; sourceTree = "<group>"; };
 		6C938EBE13E79039007FFD30 /* ofxMidiOut.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxMidiOut.h; sourceTree = "<group>"; };
 		6C938ED413E794FF007FFD30 /* CoreMIDI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMIDI.framework; path = ../../../../../../../System/Library/Frameworks/CoreMIDI.framework; sourceTree = "<group>"; };
+		6CC57FED13EE9AAC00B91D87 /* hex synth.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = "hex synth.icns"; sourceTree = "<group>"; };
+		6CC57FEE13EE9ACC00B91D87 /* hex synth.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = "hex synth.icns"; sourceTree = "<group>"; };
 		6CD9283713EC08940050CA57 /* .gitignore */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		6CD9283813EC08940050CA57 /* arrow_left.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = arrow_left.png; sourceTree = "<group>"; };
 		6CD9283913EC08940050CA57 /* arrow_right.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = arrow_right.png; sourceTree = "<group>"; };
@@ -869,6 +873,7 @@
 		6CD9283613EC08940050CA57 /* data */ = {
 			isa = PBXGroup;
 			children = (
+				6CC57FED13EE9AAC00B91D87 /* hex synth.icns */,
 				6CD9283713EC08940050CA57 /* .gitignore */,
 				6CD9283813EC08940050CA57 /* arrow_left.png */,
 				6CD9283913EC08940050CA57 /* arrow_right.png */,
@@ -964,6 +969,7 @@
 		E4B69B4A0A3A1720003C02F2 = {
 			isa = PBXGroup;
 			children = (
+				6CC57FEE13EE9ACC00B91D87 /* hex synth.icns */,
 				6CD9283613EC08940050CA57 /* data */,
 				E4B6FCAD0C3E899E008CF71C /* openFrameworks-Info.plist */,
 				E4EB6923138AFD0F00A09F29 /* Project.xcconfig */,
