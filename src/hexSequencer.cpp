@@ -372,6 +372,9 @@ void HexSequencer::moveNotes(){
                     
                     gates[nextGate].notesIncoming.push_back(gates[i].notesOutgoing[j]);
                         
+                }else{
+                    gates[i].notesIncoming[j].playing = false;
+                    op1->sendNoteOff(gates[i].notesIncoming[j].midiId, 0);
                 }
             }
 //                gates[nextGate].notesIncoming = gates[i].notesOutgoing;
