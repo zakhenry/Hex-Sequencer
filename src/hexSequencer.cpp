@@ -313,7 +313,7 @@ void HexSequencer::stopNotes(){
         
         for (int j=0; j<gates[i].notesIncoming.size();j++){
             
-            cout << j<<" checking "<<gates[i].notesIncoming.size()<<" notes"<<endl;
+//            cout << j<<" checking "<<gates[i].notesIncoming.size()<<" notes"<<endl;
             
             if (gates[i].notesIncoming[j].playing){
                 op1->sendNoteOff(gates[i].notesIncoming[j].midiId, 0);
@@ -403,7 +403,7 @@ void HexSequencer::setPosition(float _x, float _y, int _width){
     posX = _x;
     posY = _y;
     
-    cout << "width is "<<width<<" height is "<<height<<endl;
+//    cout << "width is "<<width<<" height is "<<height<<endl;
     createGates();
 }
 
@@ -419,7 +419,7 @@ void HexSequencer::createGates(){
         int xPos = 0;
         if (i<4){//top row
             xPos = trackLength/2+trackLength*i;
-            cout << sin(PI/3)<<endl;
+//            cout << sin(PI/3)<<endl;
         }else if(i<9){ //middle row
             yPos = trackLength*sin(PI/3);
             xPos = trackLength*(i-4);
@@ -475,12 +475,12 @@ void HexSequencer::update(){
 
 void HexSequencer::processOP1Event(midiPacket &event){
     
-    cout << "## element name: "<<event.elementName<<endl;
+//    cout << "## element name: "<<event.elementName<<endl;
     
     
     if (event.elementName=="encoder_blue") {
         
-        cout << "event.event is"<<event.event<<endl;
+//        cout << "event.event is"<<event.event<<endl;
 
         if(event.event == "button_down"){
             
@@ -506,7 +506,7 @@ void HexSequencer::processOP1Event(midiPacket &event){
         
         gates[currentHover].selected = true;
         
-        cout << "blue encoder event"<<endl;
+//        cout << "blue encoder event"<<endl;
         return;
     }
     
@@ -532,7 +532,7 @@ void HexSequencer::processOP1Event(midiPacket &event){
         }
 
         
-        cout << "green encoder event"<<endl;
+//        cout << "green encoder event"<<endl;
         return;
     }
     
@@ -561,7 +561,7 @@ void HexSequencer::processOP1Event(midiPacket &event){
             gates[currentHover].turretActive = 0;
         }
         
-        cout << "white encoder event"<<endl;
+//        cout << "white encoder event"<<endl;
         return;
     }
     
@@ -593,12 +593,11 @@ void HexSequencer::processOP1Event(midiPacket &event){
         
         
         
-        cout << "orange encoder event"<<endl;
+//        cout << "orange encoder event"<<endl;
         return;
     }
     
-    if (event.event == "key_down"){
-        if (event.elementId>52&&event.elementId<77){ //keyboard press
+    if (event.event == "key_down"){ //keyboard press
             Note newNote(scale);
             newNote.midiId = event.elementId;
             newNote.posX = gates[currentHover].posX; //makes it stay in place
@@ -610,8 +609,7 @@ void HexSequencer::processOP1Event(midiPacket &event){
             newNote.moveNote = false;
             gates[currentHover].notesIncoming.push_back(newNote);
             
-            cout << "added new note"<<endl;
-        }
+//            cout << "added new note. midi id is"<<newNote.midiId <<endl;
     }
     
     
