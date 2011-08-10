@@ -316,7 +316,7 @@ void HexSequencer::stopNotes(){
 //            cout << j<<" checking "<<gates[i].notesIncoming.size()<<" notes"<<endl;
             
             if (gates[i].notesIncoming[j].playing){
-                op1->sendNoteOff(gates[i].notesIncoming[j].midiId, 0);
+                op1->sendNoteOff(gates[i].notesIncoming[j].midiId);
                 gates[i].notesIncoming[j].playing = false;
             }
         }
@@ -334,7 +334,7 @@ void HexSequencer::moveNotes(){
                 
                     gates[i].notesIncoming[j].playing = true;
                     
-                    op1->sendNoteOn(gates[i].notesIncoming[j].midiId, 0);
+                    op1->sendNoteOn(gates[i].notesIncoming[j].midiId);
             }
         }
         
@@ -375,7 +375,7 @@ void HexSequencer::moveNotes(){
                         
                 }else{
                     gates[i].notesIncoming[j].playing = false;
-                    op1->sendNoteOff(gates[i].notesIncoming[j].midiId, 0);
+                    op1->sendNoteOff(gates[i].notesIncoming[j].midiId);
                 }
             }
 //                gates[nextGate].notesIncoming = gates[i].notesOutgoing;
@@ -405,6 +405,7 @@ void HexSequencer::setPosition(float _x, float _y, int _width){
     
 //    cout << "width is "<<width<<" height is "<<height<<endl;
     createGates();
+//    randomiseGates();
 }
 
 void HexSequencer::createGates(){
@@ -443,6 +444,11 @@ void HexSequencer::createGates(){
         gate.turretZeroGate = gate.neighbours[gate.turretZeroDir];
         gate.turretOneGate = gate.neighbours[gate.turretOneDir];
         
+//        gate.turretZeroGate = -1;
+//        gate.turretOneGate = -1;
+        
+        
+        
         
         gates.push_back(gate);
     }
@@ -450,6 +456,53 @@ void HexSequencer::createGates(){
     gates[0].selected = true;
 
     
+}
+
+void HexSequencer::randomiseGates(int which){
+    
+    for (int i=0; i<gates.size(); i++) {
+        if (which==0){
+            gates[i].turretZeroDir = -1;
+            gates[i].turretZeroGate = -1;
+        }else{
+            gates[i].turretOneDir = -1;
+            gates[i].turretOneGate = -1;
+        }
+    }
+    
+    for (int i=0; i<gates.size(); i++) {
+        int nextGate = -1;
+        int nextDir = -1;
+        while(nextGate<0){
+            nextDir = (int)floor(ofRandom(0, 6));
+            
+            cout <<i<<" next random dir is "<<nextDir;
+            
+            nextGate = gates[i].neighbours[nextDir];
+            
+            if ((which==0&&gates[nextGate].turretZeroGate == i)||(which==1&&gates[nextGate].turretOneGate == i)){ //if it is already pointing at this one, go somewhere else
+                nextGate = -1;
+            }
+            
+            cout << " giving nextgate: "<<nextGate<<endl;
+        }
+        cout << i<< "gate dir is "<<nextDir<<", pointing at "<<nextGate<<endl;
+        if (which==0){
+            gates[i].turretZeroDir = nextDir;
+            gates[i].turretZeroGate = gates[i].neighbours[nextDir];
+        }else{
+            if (gates[i].turretZeroDir==nextDir) {
+                gates[i].turretOneDir = -1;
+                gates[i].turretOneGate = -1;
+                gates[i].turretActive = 0;
+            }else{
+                gates[i].turretOneDir = nextDir;
+                gates[i].turretOneGate = gates[i].neighbours[nextDir];
+            }
+            
+        }
+        
+    }
 }
 
 void HexSequencer::update(){
@@ -482,7 +535,7 @@ void HexSequencer::processOP1Event(midiPacket &event){
         
 //        cout << "event.event is"<<event.event<<endl;
 
-        if(event.event == "button_down"){
+        if(event.event == "button_up"){
             
             gates[currentHover].active = !gates[currentHover].active;
             
@@ -512,23 +565,31 @@ void HexSequencer::processOP1Event(midiPacket &event){
     
     if (event.elementName=="encoder_green") {
         
-        int nextTurretAngle = gates[currentHover].turretZeroDir;
-        
-        if (event.event == "encoder_cw"){
-            nextTurretAngle ++;
-        }else if(event.event == "encoder_ccw"){
-            nextTurretAngle --;
-        }
-        
-        nextTurretAngle = (nextTurretAngle>5)?0:nextTurretAngle;
-        nextTurretAngle = (nextTurretAngle<0)?5:nextTurretAngle;
-        
-        gates[currentHover].turretZeroDir = nextTurretAngle;
-        gates[currentHover].turretZeroGate = gates[currentHover].neighbours[nextTurretAngle];
-        
-        if (gates[currentHover].turretOneDir == nextTurretAngle){
-            gates[currentHover].turretOneDir = -1;
-            gates[currentHover].turretActive = 0;
+        if (event.event == "button_down"){
+            //
+        }else if (event.event == "button_up"){
+            randomiseGates(0);
+        }else{ //turning
+            
+            int nextTurretAngle = gates[currentHover].turretZeroDir;
+            
+            if (event.event == "encoder_cw"){
+                nextTurretAngle ++;
+            }else if(event.event == "encoder_ccw"){
+                nextTurretAngle --;
+            }
+            
+            nextTurretAngle = (nextTurretAngle>5)?0:nextTurretAngle;
+            nextTurretAngle = (nextTurretAngle<0)?5:nextTurretAngle;
+            
+            gates[currentHover].turretZeroDir = nextTurretAngle;
+            gates[currentHover].turretZeroGate = gates[currentHover].neighbours[nextTurretAngle];
+            
+            if (gates[currentHover].turretOneDir == nextTurretAngle){
+                gates[currentHover].turretOneDir = -1;
+                gates[currentHover].turretActive = 0;
+            }
+                
         }
 
         
@@ -538,27 +599,34 @@ void HexSequencer::processOP1Event(midiPacket &event){
     
     if (event.elementName=="encoder_white") {
         
-        int nextTurretAngle = gates[currentHover].turretOneDir;
-        
-        if (nextTurretAngle==-1){
-            nextTurretAngle = gates[currentHover].turretZeroDir;
-        }
-        
-        if (event.event == "encoder_cw"){
-            nextTurretAngle ++;
-        }else if(event.event == "encoder_ccw"){
-            nextTurretAngle --;
-        }
-        
-        nextTurretAngle = (nextTurretAngle>5)?0:nextTurretAngle;
-        nextTurretAngle = (nextTurretAngle<0)?5:nextTurretAngle;
-        
-        gates[currentHover].turretOneDir = nextTurretAngle;
-        gates[currentHover].turretOneGate = gates[currentHover].neighbours[nextTurretAngle];
-        
-        if (gates[currentHover].turretZeroDir == nextTurretAngle){
-            gates[currentHover].turretOneDir = -1;
-            gates[currentHover].turretActive = 0;
+        if (event.event == "button_down"){
+            //
+        }else if (event.event == "button_up"){
+            randomiseGates(1);
+        }else{ //turning
+            
+            int nextTurretAngle = gates[currentHover].turretOneDir;
+            
+            if (nextTurretAngle==-1){
+                nextTurretAngle = gates[currentHover].turretZeroDir;
+            }
+            
+            if (event.event == "encoder_cw"){
+                nextTurretAngle ++;
+            }else if(event.event == "encoder_ccw"){
+                nextTurretAngle --;
+            }
+            
+            nextTurretAngle = (nextTurretAngle>5)?0:nextTurretAngle;
+            nextTurretAngle = (nextTurretAngle<0)?5:nextTurretAngle;
+            
+            gates[currentHover].turretOneDir = nextTurretAngle;
+            gates[currentHover].turretOneGate = gates[currentHover].neighbours[nextTurretAngle];
+            
+            if (gates[currentHover].turretZeroDir == nextTurretAngle){
+                gates[currentHover].turretOneDir = -1;
+                gates[currentHover].turretActive = 0;
+            }
         }
         
 //        cout << "white encoder event"<<endl;

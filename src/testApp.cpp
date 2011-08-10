@@ -6,7 +6,6 @@ void testApp::setup(){
     ofBackground(0, 0, 0);
     ofSetWindowTitle("OP-1 Sequencer");
     ofAddListener(op1.midiEvent, this, &testApp::op1Event);
-//    sequencer.setWidth(op1.getScreenWidth());
     
     sequencer.op1 = &op1;
     float x, y, w, h;

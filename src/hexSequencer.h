@@ -87,6 +87,7 @@ class HexSequencer : public OP1{
     
     void setPosition(float x, float y, int width);
     void createGates();
+    void randomiseGates(int which);
     void update(); //update moving vars
     void draw();
 
