@@ -298,6 +298,7 @@ void HexSequencer::stopNotes(){
             
             if (gates[i].notesIncoming[j].playing){
                 op1->sendNoteOff(gates[i].notesIncoming[j].playedMidiId);
+                cout << "sent note off: "<<gates[i].notesIncoming[j].playedMidiId<<endl;
                 gates[i].notesIncoming[j].playing = false;
             }
         }
@@ -314,8 +315,11 @@ void HexSequencer::moveNotes(){
             for (int j=0; j<gates[i].notesIncoming.size();j++){
                 
                     gates[i].notesIncoming[j].playing = true;
+                
+                    gates[i].notesIncoming[j].playedMidiId = gates[i].notesIncoming[j].inputMidiId+transposition;
                     
                     op1->sendNoteOn(gates[i].notesIncoming[j].playedMidiId);
+                    cout << "sent note on: "<<gates[i].notesIncoming[j].playedMidiId<<endl;
             }
         }
         
@@ -359,6 +363,7 @@ void HexSequencer::moveNotes(){
                 }else{
                     gates[i].notesIncoming[j].playing = false;
                     op1->sendNoteOff(gates[i].notesIncoming[j].playedMidiId);
+                    cout << "sent note off: "<<gates[i].notesIncoming[j].playedMidiId<<endl;
                 }
             }
 //                gates[nextGate].notesIncoming = gates[i].notesOutgoing;
@@ -511,7 +516,7 @@ void HexSequencer::update(){
 
 void HexSequencer::processOP1Event(midiPacket &event){
     
-    cout << "event name: "<<event.event<<", element name: "<<event.elementName<<endl;
+//    cout << "event name: "<<event.event<<", element name: "<<event.elementName<<endl;
     
     
     if (event.elementName=="encoder_blue") {
@@ -667,7 +672,9 @@ void HexSequencer::processOP1Event(midiPacket &event){
             
         }else{ //transpose notes
             
-            transposition = event.elementId-65; //offset from middle C
+            transposition = event.elementId-64; //offset from middle-ish of keyboard (E)
+            
+            cout << "elem id "<<event.elementId<<"gives new transposition: "<<transposition<<endl;
             
         }
             
