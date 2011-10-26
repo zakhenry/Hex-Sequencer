@@ -15,7 +15,7 @@
 struct Note {
     Note(float scale);
     float scale;
-    int midiId;
+    int inputMidiId, playedMidiId;
     bool playing;
     float targetGateX, targetGateY, lastGateX, lastGateY;
     float posX, posY;
@@ -42,13 +42,11 @@ struct HexGate : public ofBaseApp{
     vector<Note> notesIncoming;
     vector<Note> notesOutgoing;
     
-    ofTrueTypeFont	verdana30, verdana10;
-    
 };
 
 
 
-class HexSequencer : public OP1{
+class HexSequencer{
     
     threadedMetronome metro;
     void beatEvent(int &beatCount);
@@ -56,9 +54,10 @@ class HexSequencer : public OP1{
     void stopNotes();
     float currentBeatTime, beatTimestamp, currentBeatProgression;
     
-    ofTrueTypeFont	verdana;
-    
     float beatIndicatorScale;
+    
+    bool insertNotes; //if true, keyboard inputs will insert notes. If false, keyboard inputs will transpose sequence
+    int transposition;
     
     float width, height, posX, posY;
     float scale;

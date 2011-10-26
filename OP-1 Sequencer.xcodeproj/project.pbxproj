@@ -1251,7 +1251,7 @@
 				ONLY_ACTIVE_ARCH = NO;
 				PREBINDING = NO;
 				PRODUCT_NAME = "OP-1 SequencerDebug";
-				SDKROOT = "";
+				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.6.sdk";
 				VALID_ARCHS = "x86_64 i386";
 				WRAPPER_EXTENSION = app;
 			};
@@ -1342,7 +1342,7 @@
 				ONLY_ACTIVE_ARCH = NO;
 				PREBINDING = NO;
 				PRODUCT_NAME = "OP-1 Sequencer";
-				SDKROOT = "";
+				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.6.sdk";
 				VALID_ARCHS = "x86_64 i386";
 				WRAPPER_EXTENSION = app;
 			};

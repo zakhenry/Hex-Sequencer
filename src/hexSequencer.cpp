@@ -60,6 +60,7 @@ void Note::update(float distanceAlong){
 }
 
 HexGate::HexGate(float _scale){
+    
     selected = false;
     active = false;
     turretZeroDir = 0;
@@ -78,12 +79,7 @@ HexGate::HexGate(float _scale){
         vertex.y = rad*sin(i*2*PI/6);
         hexPoints.push_back(vertex);
     }
-    
-    verdana30.loadFont("verdana.ttf", 20, true, true);
-    verdana10.loadFont("verdana.ttf", 15, true, true);
-//	verdana30.setLineHeight(20.0f);
-//	verdana30.setLetterSpacing(1.035);
-    
+        
 }
 
 void HexGate::draw(){
@@ -128,30 +124,15 @@ void HexGate::draw(){
         if (selected){
             ofSetHexColor(blue);
             ofCircle(0, 0, radius/3);
-        }
-    
-//        ofSetHexColor(green);
-//        verdana30.drawString(ofToString(id), -15, 12);
-        
-//    if (turretZeroDir==0) verdana10.drawString(ofToString(neighbours[0]), -5, -20);
-//    if (turretZeroDir==1) verdana10.drawString(ofToString(neighbours[1]), 15, -7);
-//    if (turretZeroDir==2) verdana10.drawString(ofToString(neighbours[2]), 15, 20);
-//    if (turretZeroDir==3) verdana10.drawString(ofToString(neighbours[3]), -5, 35);
-//    if (turretZeroDir==4) verdana10.drawString(ofToString(neighbours[4]), -30, 20);
-//    if (turretZeroDir==5) verdana10.drawString(ofToString(neighbours[5]), -30, -7);
-    
-        
-        
-    
-    
+        }    
     
     ofPopMatrix();
 }
 
 HexSequencer::HexSequencer(){
     
-    verdana.loadFont("verdana.ttf", 12, true, true);
-    
+    insertNotes = true;
+    transposition = 0;
     beatIndicatorScale = 0;
     currentHover = 0;
     bpm = 120;
@@ -316,7 +297,7 @@ void HexSequencer::stopNotes(){
 //            cout << j<<" checking "<<gates[i].notesIncoming.size()<<" notes"<<endl;
             
             if (gates[i].notesIncoming[j].playing){
-                op1->sendNoteOff(gates[i].notesIncoming[j].midiId);
+                op1->sendNoteOff(gates[i].notesIncoming[j].playedMidiId);
                 gates[i].notesIncoming[j].playing = false;
             }
         }
@@ -334,7 +315,7 @@ void HexSequencer::moveNotes(){
                 
                     gates[i].notesIncoming[j].playing = true;
                     
-                    op1->sendNoteOn(gates[i].notesIncoming[j].midiId);
+                    op1->sendNoteOn(gates[i].notesIncoming[j].playedMidiId);
             }
         }
         
@@ -371,11 +352,13 @@ void HexSequencer::moveNotes(){
                     gates[i].notesOutgoing[j].posX = gates[i].posX;
                     gates[i].notesOutgoing[j].posY = gates[i].posY;
                     
+                    gates[i].notesOutgoing[j].playedMidiId = gates[i].notesOutgoing[j].inputMidiId+transposition;
+                    
                     gates[nextGate].notesIncoming.push_back(gates[i].notesOutgoing[j]);
                         
                 }else{
                     gates[i].notesIncoming[j].playing = false;
-                    op1->sendNoteOff(gates[i].notesIncoming[j].midiId);
+                    op1->sendNoteOff(gates[i].notesIncoming[j].playedMidiId);
                 }
             }
 //                gates[nextGate].notesIncoming = gates[i].notesOutgoing;
@@ -528,7 +511,7 @@ void HexSequencer::update(){
 
 void HexSequencer::processOP1Event(midiPacket &event){
     
-//    cout << "## element name: "<<event.elementName<<endl;
+    cout << "event name: "<<event.event<<", element name: "<<event.elementName<<endl;
     
     
     if (event.elementName=="encoder_blue") {
@@ -666,8 +649,11 @@ void HexSequencer::processOP1Event(midiPacket &event){
     }
     
     if (event.event == "key_down"){ //keyboard press
+        
+        if (insertNotes){
+            
             Note newNote(scale);
-            newNote.midiId = event.elementId;
+            newNote.inputMidiId = newNote.playedMidiId = event.elementId;
             newNote.posX = gates[currentHover].posX; //makes it stay in place
             newNote.posY = gates[currentHover].posY;
             newNote.targetGateX = newNote.posX;
@@ -677,7 +663,26 @@ void HexSequencer::processOP1Event(midiPacket &event){
             newNote.moveNote = false;
             gates[currentHover].notesIncoming.push_back(newNote);
             
-//            cout << "added new note. midi id is"<<newNote.midiId <<endl;
+//            cout << "added new note. midi id is"<<newNote.inputMidiId <<endl;
+            
+        }else{ //transpose notes
+            
+            transposition = event.elementId-65; //offset from middle C
+            
+        }
+            
+    }
+    
+    
+    
+    if(event.event == "button_down"){
+        
+        if (event.elementName == "One"){
+            insertNotes = true;
+        }else if (event.elementName == "Two"){
+            insertNotes = false;
+        }
+        
     }
     
     
@@ -707,10 +712,8 @@ void HexSequencer::draw(){
     ofScale(scale/70, scale/70);
     ofSetHexColor(orange, beatIndicatorScale*255); //custom hex function in of
     ofCircle(0, 30, 10);
-    verdana.drawString(ofToString(bpm), -15, 15);
     int stringLength = noteLengthName.length();
 //    cout << stringLength <<endl;
-    verdana.drawString(noteLengthName, -(stringLength*5), 55);
     
     ofPopMatrix();
     
