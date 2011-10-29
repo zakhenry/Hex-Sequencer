@@ -31,6 +31,8 @@ class testApp : public ofBaseApp {
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
         void op1Event(midiPacket &packet);
+    
+        void toggleView();
         
         OP1 op1;
         HexSequencer sequencer;

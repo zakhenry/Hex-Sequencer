@@ -54,6 +54,8 @@ class HexSequencer{
     void stopNotes();
     float currentBeatTime, beatTimestamp, currentBeatProgression;
     
+    ofTrueTypeFont  verdana;
+    
     float beatIndicatorScale;
     
     bool insertNotes; //if true, keyboard inputs will insert notes. If false, keyboard inputs will transpose sequence
@@ -82,6 +84,9 @@ class HexSequencer{
     string noteLengthName;
     string getNoteLengthName(int noteLength);
     int getGreatestCommonDenominator(int a, int b);
+    
+    bool viewFullscreen;
+    void toggleView();
 
     
     void setPosition(float x, float y, int width);

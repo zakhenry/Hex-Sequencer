@@ -11,9 +11,9 @@ void testApp::setup(){
     float x, y, w, h;
     op1.getScreenDimensions(x, y, w, h);
     sequencer.setPosition(x, y, (int)w);
+//    sequencer.setPosition(100, 100, 1500);
     
     ofSetFrameRate(60); //may cause timing issues, keep an eye on it
-    
     
 }
 
@@ -33,7 +33,7 @@ void testApp::draw(){
     
     
     
-    op1.draw();
+//    op1.draw();
     
     sequencer.draw();
     

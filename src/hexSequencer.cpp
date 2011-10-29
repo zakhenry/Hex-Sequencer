@@ -28,13 +28,15 @@ Note::Note(float _scale){
 
 void Note::draw(){
     ofPushStyle();
-    if (!playing){
-        ofNoFill();
-    }else{
-        ofFill();
-    }
         ofSetHexColor(white);
         ofCircle(posX, posY, scale/15);
+        
+    if (!playing){
+        ofSetHexColor(black);
+        ofCircle(posX, posY, scale/20);
+    }
+    
+        
 //        cout << "posX: "<<posX<<", posY:"<<posY<<endl;
     ofPopStyle();
 }
@@ -129,7 +131,12 @@ void HexGate::draw(){
     ofPopMatrix();
 }
 
+
 HexSequencer::HexSequencer(){
+    
+    verdana.loadFont("verdana.ttf", 48, true, true);
+    
+    viewFullscreen = false;
     
     insertNotes = true;
     transposition = 0;
@@ -397,7 +404,14 @@ void HexSequencer::setPosition(float _x, float _y, int _width){
 }
 
 void HexSequencer::createGates(){
-    gates.empty(); //in case it has been initiated before
+    
+    cout << "gates created"<<endl;
+    
+    cout << "there is "<<gates.size()<<" gates"<<endl;
+    
+    gates.clear(); //in case it has been initiated before
+    
+    cout << "there is now "<<gates.size()<<" gates"<<endl;
     
     trackLength = scale;
     
@@ -502,7 +516,7 @@ void HexSequencer::update(){
 //    cout << "60/(float)bpm: "<<60/(float)bpm<<endl;
 //    cout << "currentBeatProgression: "<<currentBeatProgression<<endl;
 //    beatIndicatorScale-=0.01;
-//    beatIndicatorScale = currentBeatProgression;
+    beatIndicatorScale = currentBeatProgression;
     
     for (int i=0; i<gates.size(); i++){ //process all the notes
         for (int j=0; j<gates[i].notesIncoming.size();j++){
@@ -684,12 +698,34 @@ void HexSequencer::processOP1Event(midiPacket &event){
     
     if(event.event == "button_down"){
         
+//        cout << "button down is: "<<event.elementName<<endl;
+        
         if (event.elementName == "One"){
             insertNotes = true;
         }else if (event.elementName == "Two"){
             insertNotes = false;
+        }else if (event.elementName == "Sequencer"){
+            toggleView();
         }
         
+    }
+    
+}
+
+void HexSequencer::toggleView(){
+    
+    viewFullscreen = !viewFullscreen;
+    
+    if (viewFullscreen){
+        setPosition(100, 100, ofGetWidth()-200);
+        ofSetFullscreen(true);
+    }else{
+        
+        float x, y, w, h;
+        op1->getScreenDimensions(x, y, w, h);
+        
+        setPosition(x, y, (int)w);
+        ofSetFullscreen(false);
     }
     
     
@@ -698,6 +734,10 @@ void HexSequencer::processOP1Event(midiPacket &event){
 }
 
 void HexSequencer::draw(){
+    
+    if (!viewFullscreen){
+        op1->draw();
+    }
     
     ofPushStyle();
     
@@ -716,11 +756,25 @@ void HexSequencer::draw(){
     ofPushMatrix();
     
     ofTranslate(width-(scale/3), 0);
+//    ofScale(scale/10, scale/10);
     ofScale(scale/70, scale/70);
-    ofSetHexColor(orange, beatIndicatorScale*255); //custom hex function in of
+    ofSetHexColor(orange, ((sin((1-beatIndicatorScale*2)*PI))+1)/2*255); //custom hex function in of
+//    cout << sin((1-beatIndicatorScale*2)*PI)<<endl;
     ofCircle(0, 30, 10);
+    ofSetHexColor(black);
+    ofCircle(0, 30, 6);
+    
+    ofSetHexColor(orange);
+    
+    ofScale(0.2, 0.2);
+    verdana.drawString(ofToString(bpm), -60, 75);
     int stringLength = noteLengthName.length();
-//    cout << stringLength <<endl;
+    //    cout << stringLength <<endl;
+    verdana.drawString(noteLengthName, -(stringLength*20), 255);
+    
+    ofSetHexColor(0xaaaaaa);
+    string prefix = (transposition>0)?"+":"";
+    verdana.drawString(prefix+ofToString(transposition), -1530, 800);
     
     ofPopMatrix();
     
